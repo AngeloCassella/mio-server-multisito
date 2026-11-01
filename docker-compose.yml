@@ -1,0 +1,69 @@
+services:
+  nginx:
+    image: nginx:stable-alpine
+    restart: unless-stopped
+    ports:
+      - "${HTTP_BIND_IP:-127.0.0.1}:${HTTP_PORT:-8080}:80"
+    environment:
+      PROJECT1_DOMAIN: ${PROJECT1_DOMAIN:?required}
+      NGINX_ENVSUBST_FILTER: ^PROJECT1_DOMAIN$
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/templates/default.conf.template:ro
+      - ./frontends:/var/www:ro
+    depends_on:
+      backend-progetto1:
+        condition: service_healthy
+    networks: [web]
+
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?required}
+      MYSQL_DATABASE: ${PROJECT1_DB_NAME:?required}
+      MYSQL_USER: ${PROJECT1_DB_USER:?required}
+      MYSQL_PASSWORD: ${PROJECT1_DB_PASSWORD:?required}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks: [database]
+    healthcheck:
+      test: ["CMD-SHELL", 'MYSQL_PWD="$$MYSQL_PASSWORD" mysql -h 127.0.0.1 -u "$$MYSQL_USER" "$$MYSQL_DATABASE" -e "SELECT 1" >/dev/null 2>&1']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backend-progetto1:
+    build: ./services/progetto1
+    restart: unless-stopped
+    environment:
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_NAME: ${PROJECT1_DB_NAME:?required}
+      DB_USER: ${PROJECT1_DB_USER:?required}
+      DB_PASSWORD: ${PROJECT1_DB_PASSWORD:?required}
+      CORS_ORIGINS: ${CORS_ORIGINS:?required}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks: [web, database]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging: *logging
+
+volumes:
+  mysql_data:
+
+networks:
+  web:
+  database:
+    internal: true

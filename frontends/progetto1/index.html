@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="it">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Progetto 1</title>
+<body>
+<h1>Progetto 1 online</h1>
+<button id="test">Verifica MySQL</button>
+<pre id="result" aria-live="polite"></pre>
+<script>
+document.querySelector('#test').onclick = async () => {
+  const output = document.querySelector('#result');
+  try {
+    const response = await fetch('/api/db-test');
+    output.textContent = JSON.stringify(await response.json(), null, 2);
+  } catch { output.textContent = 'Server non raggiungibile'; }
+};
+</script>
+</body>
+</html>
