@@ -1,0 +1,45 @@
+
+    body {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+    
+    /* Indicatore stato attivo per bottoni presenze ed esiti */
+    .btn-active-present {
+      background-color: #059669 !important;
+      color: #ffffff !important;
+      border-color: #10b981 !important;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    }
+    .btn-active-absent {
+      background-color: #dc2626 !important;
+      color: #ffffff !important;
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+    }
+    .btn-active-win {
+      background-color: #2563eb !important;
+      color: #ffffff !important;
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+    }
+    .btn-active-loss {
+      background-color: #d97706 !important;
+      color: #ffffff !important;
+      border-color: #f59e0b !important;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+    }
+    .btn-active-idle {
+      background-color: #4b5563 !important;
+      color: #ffffff !important;
+      border-color: #6b7280 !important;
+      box-shadow: 0 0 8px rgba(107, 114, 128, 0.3);
+    }
+  

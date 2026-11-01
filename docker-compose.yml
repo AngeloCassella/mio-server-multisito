@@ -6,7 +6,8 @@ services:
       - "${HTTP_BIND_IP:-127.0.0.1}:${HTTP_PORT:-8080}:80"
     environment:
       PROJECT1_DOMAIN: ${PROJECT1_DOMAIN:?required}
-      NGINX_ENVSUBST_FILTER: ^PROJECT1_DOMAIN$
+      REGISTRO_DOMAIN: ${REGISTRO_DOMAIN:-registrosport.duckdns.org}
+      NGINX_ENVSUBST_FILTER: ^(PROJECT1_DOMAIN|REGISTRO_DOMAIN)$
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/templates/default.conf.template:ro
       - ./frontends:/var/www:ro
@@ -58,6 +59,22 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    logging: *logging
+
+  backend-registrosport:
+    build: ./services/registrosport
+    restart: unless-stopped
+    environment:
+      DB_HOST: mysql
+      DB_NAME: registrosport
+      DB_USER: registrosport
+      DB_PASSWORD: ${REGISTRO_DB_PASSWORD:?required}
+      ACCESS_USER: ${REGISTRO_USER:-admin}
+      ACCESS_PASSWORD: ${REGISTRO_PASSWORD:?required}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks: [web, database]
     logging: *logging
 
 volumes:

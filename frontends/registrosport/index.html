@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="it" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Registro Elettronico & Gestore Attività</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Font Inter -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+  <script src="tailwind-config.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="h-full flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- TOP HEADER -->
+  <header class="bg-slate-800/95 backdrop-blur border-b border-slate-700/80 sticky top-0 z-30 px-4 py-3 flex items-center justify-between shadow-md">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/20">
+        <i class="fa-solid fa-clipboard-user text-lg"></i>
+      </div>
+      <div>
+        <h1 class="text-base font-bold text-slate-100 leading-tight">Registro Smart</h1>
+        <p class="text-[11px] text-slate-400">Presenze & Tornei Scolastici</p>
+      </div>
+    </div>
+    
+    <!-- Status Indicatore Salvataggio -->
+    <div class="flex items-center gap-2">
+      <span id="saveStatus" class="text-[11px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full flex items-center gap-1.5 opacity-80 transition-opacity">
+        <i class="fa-solid fa-floppy-disk text-xs"></i> Salvato sul server
+      </span>
+    </div>
+  </header>
+
+  <!-- SELEZIONE SCHEDE NAVIGAZIONE IN ALTO -->
+  <nav class="bg-slate-800 border-b border-slate-700/60 px-2 flex justify-around">
+    <button onclick="switchTab('register')" id="tab-register" class="flex-1 py-2.5 text-xs font-semibold text-brand-400 border-b-2 border-brand-500 flex items-center justify-center gap-2 transition">
+      <i class="fa-solid fa-calendar-check text-sm"></i>
+      <span>Registro Lezione</span>
+    </button>
+    <button onclick="switchTab('management')" id="tab-management" class="flex-1 py-2.5 text-xs font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 flex items-center justify-center gap-2 transition">
+      <i class="fa-solid fa-sliders text-sm"></i>
+      <span>Gestione & Spostamenti</span>
+    </button>
+    <button onclick="switchTab('export')" id="tab-export" class="flex-1 py-2.5 text-xs font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 flex items-center justify-center gap-2 transition">
+      <i class="fa-solid fa-file-excel text-sm"></i>
+      <span>Report & Export</span>
+    </button>
+  </nav>
+
+  <!-- CONTENUTO PRINCIPALE SCROLLABILE -->
+  <main class="flex-1 overflow-y-auto custom-scrollbar p-3.5 sm:p-5 max-w-3xl mx-auto w-full">
+
+    <!-- ================= 1. TAB REGISTRO GIORNALIERO ================= -->
+    <section id="view-register" class="space-y-4">
+      
+      <!-- BARRA SELEZIONE DATA E CLASSE -->
+      <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-3.5 space-y-3 shadow-sm">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          
+          <!-- Selettore Data Lezione -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+              <i class="fa-regular fa-calendar-days text-brand-400 mr-1"></i> Data Lezione
+            </label>
+            <input type="date" id="lessonDatePicker" onchange="onDateOrClassChange()" 
+                   class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-medium focus:outline-none focus:border-brand-500">
+          </div>
+
+          <!-- Selettore Classe -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+              <i class="fa-solid fa-users text-brand-400 mr-1"></i> Selezione Classe
+            </label>
+            <select id="registerClassSelect" onchange="onDateOrClassChange()" 
+                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-medium focus:outline-none focus:border-brand-500">
+              <!-- Popolato dinamicamente -->
+            </select>
+          </div>
+
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+            <i class="fa-solid fa-book-open text-brand-400 mr-1"></i> Attività / Argomento della lezione
+          </label>
+          <textarea id="lessonActivity" rows="2" oninput="saveLessonActivity()" placeholder="Descrivi l'attività svolta in questa classe nella data selezionata..."
+            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500"></textarea>
+          <p class="text-[10px] text-slate-500 mt-1">L'attività viene salvata separatamente per ogni data e classe.</p>
+        </div>
+      </div>
+
+      <!-- LISTA STUDENTI CON STATI DEL GIORNO SELEZIONATO -->
+      <div class="flex items-center justify-between px-1">
+        <h2 id="registerTitle" class="text-sm font-bold text-slate-200">Studenti in Registro</h2>
+        <span id="registerCounter" class="text-xs text-slate-400">0 studenti</span>
+      </div>
+
+      <div id="registerStudentsList" class="space-y-2.5">
+        <!-- Renderizzato via Javascript -->
+      </div>
+    </section>
+
+
+    <!-- ================= 2. TAB GESTIONE STRUTTURA & SPOSTAMENTI ================= -->
+    <section id="view-management" class="space-y-5 hidden">
+      
+      <div class="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3 text-xs text-amber-300 flex items-start gap-2.5">
+        <i class="fa-solid fa-shield-halved text-amber-400 text-base mt-0.5"></i>
+        <div>
+          <span class="font-bold">Area Modifica & Spostamenti:</span> Qui puoi ordinare le classi e gli studenti (con i tasti su/giù), rinominarli, modificare la loro categoria o trasferire uno studente da una classe all'altra.
+        </div>
+      </div>
+
+      <!-- GESTIONE CLASSI -->
+      <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-school text-brand-400"></i> Ordine e Gestione Classi
+          </h3>
+          <button onclick="openModal('modalAddClass')" class="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-medium text-xs flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-plus"></i> Nuova Classe
+          </button>
+        </div>
+
+        <div id="managementClassesList" class="space-y-2 pt-1">
+          <!-- Renderizzato via JS -->
+        </div>
+      </div>
+
+      <!-- GESTIONE STUDENTI PER CLASSE -->
+      <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-user-gear text-brand-400"></i> Ordine & Spostamento Studenti
+          </h3>
+          
+          <!-- Select Classe per Gestione Studenti -->
+          <div class="w-full sm:w-56">
+            <select id="manageStudentsClassSelect" onchange="renderManageStudents()" 
+                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white">
+              <!-- Popolato via JS -->
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-2 border-t border-slate-700/50">
+          <span class="text-xs text-slate-400">Elenco Studenti Iscritti</span>
+          <button onclick="openModal('modalAddStudent')" class="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium text-xs flex items-center gap-1.5">
+            <i class="fa-solid fa-user-plus text-brand-400"></i> Aggiungi Studente
+          </button>
+        </div>
+
+        <div id="managementStudentsList" class="space-y-2 pt-1">
+          <!-- Renderizzato via JS -->
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================= 3. TAB REPORT & EXPORT ================= -->
+    <section id="view-export" class="space-y-4 hidden">
+      <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 space-y-4">
+        <div>
+          <h3 class="text-sm font-bold text-white flex items-center gap-2 mb-1">
+            <i class="fa-solid fa-file-excel text-emerald-400 text-base"></i> Esportazione Report Excel / CSV
+          </h3>
+          <p class="text-xs text-slate-400">
+            Esporta una tabella compatta per classe: date in colonna, attività nella prima riga e un esito per ogni studente. Il file CSV si apre con Excel.
+          </p>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-700/60 rounded-xl p-3.5 space-y-3">
+          
+          <!-- Filtro Classe -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Seleziona Classe da esportare</label>
+            <select id="exportClassFilter" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
+              <option value="ALL">-- Tutte le Classi --</option>
+              <!-- Opzioni classi -->
+            </select>
+          </div>
+
+          <!-- Filtro Intervallo Date -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Intervallo temporale</label>
+            <select id="exportDateFilter" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
+              <option value="ALL">Tutte le date registrate</option>
+              <option value="CURRENT_DATE">Solo la data corrente selezionata nel registro</option>
+            </select>
+          </div>
+
+          <button onclick="exportToExcelCSV()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition active:scale-95">
+            <i class="fa-solid fa-download text-sm"></i>
+            <span>SCARICA TABELLA EXCEL (.CSV)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- SEZIONE BACKUP / RIPRISTINO DATA JSON -->
+      <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 space-y-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-database text-brand-400"></i> Backup Completo dell'Applicazione
+        </h3>
+        <p class="text-xs text-slate-400">Esporta o importa l'intero archivio applicativo in formato JSON per conservare o trasferire i dati su un altro dispositivo.</p>
+
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+          <button onclick="exportJSONBackup()" class="py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-file-export"></i> Esporta JSON
+          </button>
+          
+          <label class="py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer text-center">
+            <i class="fa-solid fa-file-import"></i> Importa JSON
+            <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="importJSONBackup(event)">
+          </label>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+
+  <!-- ================= MODALI ED EDITING ================= -->
+
+  <!-- MODALE: NUOVA CLASSE -->
+  <div id="modalAddClass" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white">Aggiungi Classe</h3>
+        <button onclick="closeModal('modalAddClass')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Nome Classe (es. 1ª A)</label>
+          <input type="text" id="inputClassName" placeholder="Nome classe..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Categoria / Sezione (Opzionale, es. Scienze, Torneo B)</label>
+          <input type="text" id="inputClassCategory" placeholder="Categoria..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-1">
+        <button onclick="closeModal('modalAddClass')" class="px-4 py-2 rounded-xl bg-slate-700 text-slate-300 text-xs font-medium">Annulla</button>
+        <button onclick="addClass()" class="px-4 py-2 rounded-xl bg-brand-600 text-white text-xs font-medium shadow">Crea Classe</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE: MODIFICA / RINOMINA CLASSE -->
+  <div id="modalEditClass" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white">Modifica / Rinomina Classe</h3>
+        <button onclick="closeModal('modalEditClass')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <input type="hidden" id="editClassId">
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Nome Classe</label>
+          <input type="text" id="editClassName" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Categoria / Sezione</label>
+          <input type="text" id="editClassCategory" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-1">
+        <button onclick="closeModal('modalEditClass')" class="px-4 py-2 rounded-xl bg-slate-700 text-slate-300 text-xs font-medium">Annulla</button>
+        <button onclick="saveEditClass()" class="px-4 py-2 rounded-xl bg-brand-600 text-white text-xs font-medium shadow">Salva Modifiche</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE: NUOVO STUDENTE -->
+  <div id="modalAddStudent" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white">Aggiungi Studente</h3>
+        <button onclick="closeModal('modalAddStudent')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Nome e Cognome</label>
+        <input type="text" id="inputStudentName" placeholder="es. Mario Rossi" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('modalAddStudent')" class="px-4 py-2 rounded-xl bg-slate-700 text-slate-300 text-xs font-medium">Annulla</button>
+        <button onclick="addStudent()" class="px-4 py-2 rounded-xl bg-brand-600 text-white text-xs font-medium shadow">Aggiungi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE: MODIFICA & SPOSTAMENTO STUDENTE -->
+  <div id="modalEditStudent" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white">Modifica Studente</h3>
+        <button onclick="closeModal('modalEditStudent')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <input type="hidden" id="editStudentClassId">
+      <input type="hidden" id="editStudentId">
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Nome e Cognome Studente</label>
+          <input type="text" id="editStudentName" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Sposta in un'altra Classe</label>
+          <select id="editStudentTargetClass" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white">
+            <!-- Popolato via JS -->
+          </select>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-1">
+        <button onclick="closeModal('modalEditStudent')" class="px-4 py-2 rounded-xl bg-slate-700 text-slate-300 text-xs font-medium">Annulla</button>
+        <button onclick="saveEditStudent()" class="px-4 py-2 rounded-xl bg-brand-600 text-white text-xs font-medium shadow">Salva</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-slate-800 text-slate-100 border border-slate-700 px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs z-50 opacity-0 pointer-events-none transition-all duration-300">
+    <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toastMsg">Messaggio</span>
+  </div>
+
+
+  <!-- JAVASCRIPT APP LOGIC -->
+  <script src="app.js"></script>
+</body>
+</html>
