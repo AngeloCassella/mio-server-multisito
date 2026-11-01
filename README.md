@@ -1,50 +1,20 @@
 # Server multisito
 
-## Mac: sviluppo locale
+Un progetto nato per ospitare più siti web su un unico server Oracle Cloud, mantenendo una struttura ordinata e facile da ampliare.
 
-Copia `.env.example` in `.env` soltanto se `.env` non esiste.
-Mantieni HTTP_BIND_IP=127.0.0.1 e HTTP_PORT=8080.
+Ogni sito ha il proprio frontend, realizzato con HTML, CSS e JavaScript, e può utilizzare un backend Python per gestire le operazioni e salvare i dati. Nginx riceve le richieste e le indirizza al sito e al servizio corretti in base al dominio.
 
-```sh
-docker compose up -d --build
-```
+I servizi vengono eseguiti in container Docker. Un unico servizio MySQL ospita database separati per le applicazioni, così ogni progetto conserva i propri dati anche quando i container vengono aggiornati o riavviati.
 
-Apri http://localhost:8080. Le password locali sono indipendenti da quelle del server.
+## Struttura
 
-## Oracle: produzione
+- `frontends/`: interfacce dei siti web.
+- `services/`: backend e servizi delle applicazioni.
+- `nginx/`: configurazioni per i domini e le connessioni HTTPS.
+- `scripts/`: strumenti di supporto alla gestione del server.
+- `docker-compose.yml`: definizione dei servizi condivisi e delle applicazioni.
+- `docker-compose.production.yml`: configurazione aggiuntiva per la produzione.
 
-Il server deve avere un certificato valido già emesso in `/etc/letsencrypt`.
-In `.env` configura HTTP_BIND_IP=0.0.0.0, HTTP_PORT=80 e
-PROJECT1_DOMAIN=ancservice.duckdns.org. Imposta password uniche al primo avvio.
-Non cambiare le password di un database esistente modificando solo `.env`.
+La struttura permette di aggiungere nuovi siti affiancandoli a quelli esistenti, riutilizzando il server e i servizi comuni.
 
-```sh
-sudo docker compose -f docker-compose.yml -f docker-compose.production.yml config --quiet
-sudo docker compose -f docker-compose.yml -f docker-compose.production.yml up -d --build
-```
-
-Le porte pubbliche sono 80 e 443; MySQL e backend non pubblicano porte.
-Nella console Oracle consenti TCP 80/443, mantenendo SSH.
-Non installare Nginx sull'host: viene eseguito in Docker.
-
-## Certificati
-
-Certbot è installato sull'host. La webroot usata per emissione e rinnovi è
-`/home/ubuntu/mio-server-multisito/frontends/progetto1`.
-Mantieni questa cartella e la route HTTP `/.well-known/acme-challenge/` anche
-quando sostituisci il frontend. Non cancellarle durante i deploy.
-
-```sh
-sudo install -m 750 scripts/reload-multisito /etc/letsencrypt/renewal-hooks/deploy/reload-multisito
-sudo /etc/letsencrypt/renewal-hooks/deploy/reload-multisito
-sudo certbot renew --dry-run
-```
-
-Il timer Certbot rinnova il certificato; l'hook ricarica Nginx dopo il rinnovo.
-Certificati, chiavi private e `.env` restano sul server e non vanno in Git.
-
-## Aggiornamenti
-
-Sul server usa sempre entrambi i file Compose (anche per down o exec).
-Non usare `down -v`: eliminerebbe i dati MySQL.
-Prima di aggiornamenti al database esegui un backup; il volume non è un backup.
+Le credenziali e le configurazioni private vengono gestite separatamente dal codice del progetto.

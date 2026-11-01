@@ -1,7 +1,6 @@
 # Segreti
 .env
 .env.*
-!.env.example
 *.pem
 *.key
 # Python
@@ -21,3 +20,6 @@ backups/
 
 # Schema iniziale senza credenziali reali
 !scripts/init-registrosport.sql
+
+# Documentazione e configurazione solo locali
+REGISTROSPORT.md
