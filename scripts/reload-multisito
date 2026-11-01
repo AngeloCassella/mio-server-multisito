@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+cd /home/ubuntu/mio-server-multisito
+/usr/bin/docker compose -f docker-compose.yml -f docker-compose.production.yml exec -T nginx nginx -t
+/usr/bin/docker compose -f docker-compose.yml -f docker-compose.production.yml exec -T nginx nginx -s reload

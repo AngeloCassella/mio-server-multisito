@@ -1,0 +1,8 @@
+# Si aggiunge al file base, non si usa da solo.
+services:
+  nginx:
+    ports:
+      - "${HTTP_BIND_IP:-127.0.0.1}:443:443"
+    volumes:
+      - ./nginx/nginx.production.conf:/etc/nginx/templates/default.conf.template:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
